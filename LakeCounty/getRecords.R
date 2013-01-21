@@ -4,7 +4,7 @@ getBookings <- function(bookingIDs, outputFile="bookings.Rds", sleepInterval=1){
   counter <- 0
   for (i in bookingIDs){    
     Sys.sleep(sleepInterval)
-    bookings[[as.character(i)]] <- downloadBooking(i)
+    tryCatch(bookings[[as.character(i)]] <- downloadBooking(i), error=function(e){warning("Error downloading booking ", i)})
     saveRDS(bookings, file=outputFile)
     counter <- counter+1
     setTxtProgressBar(pb, counter)

@@ -23,7 +23,7 @@ downloadDate <- function(month, day, year){
 downloadBooking <- function(bookingID){
   dat <- GET("http://acm.co.lake.ca.us/sheriff/bookingdetail.asp", query=list(booknum=bookingID))
   if (dat$headers$status != "200"){
-    stop ("Non-200 status returned from GET request to server.")
+    stop ("Non-200 status returned from GET request to server: ", dat$headers)
   }
   
   con <- content(dat, as="text")
