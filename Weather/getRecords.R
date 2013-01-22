@@ -16,7 +16,7 @@ getWeather <- function(wu_key, zip, startDate, endDate, outputFile="weather.Rds"
   allDays <- itemizeDates(startDate, endDate, format)
   
   pb <- txtProgressBar(min=0, max=length(allDays), initial=0, style=3)
-  weather <- list()
+  weather <- list(zip=zip)  
   counter <- 0
   for (d in allDays){    
     Sys.sleep(sleepInterval)
