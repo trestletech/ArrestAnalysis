@@ -1,4 +1,4 @@
-getBookings <- function(bookingIDs, outputFile="bookings.Rds", sleepInterval=1){
+getBookings <- function(bookingIDs, outputFile="bookings.Rda", sleepInterval=1){
   pb <- txtProgressBar(min=0, max=length(unique(bookingIDs)), initial=0, style=3)
   bookings <- list()
   charges <- list()
@@ -10,7 +10,7 @@ getBookings <- function(bookingIDs, outputFile="bookings.Rds", sleepInterval=1){
     charges <- c(charges, thisBook$charges)
     
     if (!is.null(outputFile)){
-      saveRDS(bookings, file=outputFile)
+      save(bookings, charges, file=outputFile)
     }
     counter <- counter+1
     setTxtProgressBar(pb, counter)

@@ -1,8 +1,9 @@
-#' Download the bookings for a particular day.
-downloadDate <- function(month, day, year){
-  library(XML)
-  library(httr)
+library(XML)
+library(httr)
+library(lubridate)
 
+#' Download the bookings for a particular day.
+downloadDate <- function(month, day, year){  
   dat <- GET("http://acm.co.lake.ca.us/sheriff/arrests.asp", query=list(ArrestDate=paste(month, day, year, sep="/")))
   if (dat$headers$status != "200"){
     stop ("Non-200 status returned from GET request to server.")
@@ -41,7 +42,7 @@ downloadBooking <- function(bookingID){
     info <- c(info, thisTab$data)
     charges <- c(charges, thisTab$charges)
   }  
-  list(data=info, charges=charges)
+  return(list(data=info, charges=charges))
 }
 
 #' Parse a table having a content header row then alternating rows of 
