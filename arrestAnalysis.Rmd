@@ -1,0 +1,109 @@
+---
+title: "Arrest Analysis"
+author: "Jeff Allen"
+date: "09/24/2014"
+output: html_document
+---
+
+# Arrest Analysis of Lake County, CA
+
+We've already downloaded the data (via `dataCollection.Rmd`) in the `data/` dir, so we'll load it in and take a look.
+
+```{r}
+library(lubridate)
+
+arrests <- readRDS("data/arrests.Rds")
+load("data/bookings.Rda")
+# Produces `bookings` and `charges` objects.
+```
+
+In total, we have `r nrow(arrests)` arrests recorded with `r length(bookings)` bookings and `r length(charges)` charges on those bookings. These bookings range from `r format(min(arrests[,"Time Booked"]), "%B %d, %Y")` to `r format(max(arrests[,"Time Booked"]), "%B %d, %Y")`.
+
+We can now check out a few properties about those arrested.
+
+### Ethnicity
+
+Using some simplified racial data from the 2011 census, we can compare those arrested vs. the demographics of Lake County.
+
+```{r, fig.width=9}
+# Demographics of Lake County
+source("LakeCounty/demographics.R")
+as.character(raceAbbrevs)
+races
+
+
+# Extract the race of everyone arrested
+arrRac <- gsub("(\\w)\\/\\w", "\\1", arrests$`Race/Sex`)
+# Set to "Other" if we don't know this race.
+arrRac[!arrRac %in% names(raceAbbrevs)] <- "O"
+emp <- table(arrRac)/length(arrRac)
+
+# Compute the difference
+delta <- emp - races[names(emp)]
+names(delta) <- as.character(raceAbbrevs[names(delta)])
+barplot(delta, ylab="Under-Represented      <-->      Over-Represented", main="Arrests by Race")
+abline(h=0)
+```
+
+### Gender
+
+Using some simplified racial data from the 2011 census, we can compare those arrested vs. the demographics of Lake County.
+
+```{r, fig.width=9}
+# Demographics of Lake County
+gender <- unlist(gender)
+gender
+
+# Extract the gender of everyone arrested
+arrGen <- gsub("\\w\\/(\\w)", "\\1", arrests$`Race/Sex`)
+# Set to "Other" if we don't know this race.
+arrGen[!arrGen %in% names(gender)] <- "O"
+emp <- table(arrGen)/length(arrGen)
+
+# Compute the difference
+delta <- emp - gender[names(emp)]
+
+names(delta) <- as.character(genAbbrev[names(delta)])
+barplot(delta, ylab="Under-Represented      <-->      Over-Represented", main="Arrests by Gender")
+abline(h=0)
+```
+
+### Age
+
+We can do the same for age.
+
+```{r, fig.width=9}
+# Demographics of Lake County
+names(ages) <- 1:length(ages)
+# Normalize to a percentage (It should be close to start. Formalize it)
+ages <- ages/sum(ages)
+
+
+arrests$DOB <- mdy(arrests$DOB, tz="PDT")
+span <- as.duration(new_interval(arrests$DOB, arrests$`Time Booked`))
+# Convert to seconds
+suppressWarnings(span <- as.integer(span))
+# Convert to years -- age at time of arrest
+span <- span/60/60/24/365.25
+
+dens <- density(span, na.rm=TRUE)
+
+# Plot arrests
+plot(0,0, type="n", ylim=c(0,max(dens$y)), xlim=c(1,length(ages)), ylab="Arrests", xlab="Age at Time of Arrest", main="Arrests by Age")
+lines(dens)
+
+# Plot demographics
+lo <- loess.smooth(1:length(ages), ages, span=.25, degree=1, family="symmetric", evaluation=100)
+lines(lo, col=2)
+
+legend(x=60, y=max(dens$y), legend=c("Arrests", "Population"), col=1:2, lwd=2)
+
+```
+
+
+
+
+
+
+
+

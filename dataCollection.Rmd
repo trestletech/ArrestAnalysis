@@ -1,0 +1,63 @@
+---
+title: "Lake County Arrest Data Collection"
+author: "Jeff Allen"
+date: "09/24/2014"
+output: html_document
+---
+
+## Data Collection
+
+We'll first want to download the data. For starters, we can get the past year of arrests data.
+
+```{r, getArrests, cache=TRUE}
+# We'll need to source the supporting functions.
+source("LakeCounty/demographics.R")
+source("LakeCounty/getRecords.R")
+source("LakeCounty/parseRecords.R")
+source("Weather/DownloadHistoric.R")
+source("Weather/getRecords.R")
+
+# Make the data dir
+dir.create("data", showWarnings = FALSE)
+
+lastYear <- today()
+year(lastYear) <- year(today())-1
+days <- itemizeDates(startDate = lastYear, today())
+
+# Get all the records, we'll pause for 1 second in between each to avoid overwhelming
+# their server. So we expect this to take 6+ minutes.
+arrests <- NULL
+for (d in days){
+  dat <- downloadDate(month(d), day(d), year(d))
+  arrests <- rbind(arrests, dat)    
+  Sys.sleep(1)
+}
+
+# Clean up the arrests$`Time Booked` field
+tb <- arrests$`Time Booked`
+tb <- as.character(tb)
+# Restore a space
+tb <- gsub("([\\d/]+)(\\d\\d:\\d\\d)","\\1 \\2",tb, perl=TRUE)
+tb <- mdy_hm(tb, tz="PDT")
+arrests$`Time Booked` <- tb
+
+saveRDS(arrests, "data/arrests.Rds")
+```
+
+The real information is contained on a detail page within each booking, though. We'll have to get those individually which will take *much* more time since there are `r nrow(arrests)` arrests to collect. We have a helper function for this, though.
+
+```{r, getBookingsAndCharges, cache=TRUE, results='hide'}
+bookCharg <- getBookings(arrests[,1], outputFile="data/bookings.Rda")
+charges <- bookCharg$charges
+bookings <- bookCharg$bookings
+```
+
+Now we have all the arrests, bookings, and charges (and saved a copy to disk for later analysis).
+
+
+
+
+
+
+
+
