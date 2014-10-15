@@ -2,7 +2,7 @@ library(httr)
 library(RJSONIO)
 
 #' @param wu_key Your Weather Underground API key.
-getHistoricWeather <- function(wu_key, zip, month=NULL, day=NULL, year=NULL, date=NULL, format="%Y-%m-%d"){
+getHistoricWeather <- function(wu_key=options("wu_key")[[1]], zip, month=NULL, day=NULL, year=NULL, date=NULL, format="%Y-%m-%d"){
   if (!missing(date)){
       date <- as.Date(date)
       year <- year(date)

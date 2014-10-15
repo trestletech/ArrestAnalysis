@@ -5,3 +5,5 @@ data/
 data2/
 *_cache
 figure/
+wu-key.txt
+weather.Rds

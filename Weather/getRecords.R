@@ -12,7 +12,11 @@ itemizeDates <- function(startDate, endDate,
 #' 
 #' @param startDate The date to start from in the format of YYYY-MM-DD
 #' @param endDate The date to end on in the format of YYYY-MM-DD
-getWeather <- function(wu_key, zip, startDate, endDate, outputFile="weather.Rds", sleepInterval=8, format="%Y-%m-%d"){
+getWeather <- function(wu_key=options("wu_key")[[1]], zip, startDate, endDate, outputFile="weather.Rds", sleepInterval=7, format="%Y-%m-%d"){
+  if (missing(wu_key) || is.null(wu_key)){
+    stop("No Weather Underground API key provided")
+  }
+  
   allDays <- itemizeDates(startDate, endDate, format)
   
   pb <- txtProgressBar(min=0, max=length(allDays), initial=0, style=3)

@@ -1,0 +1,66 @@
+---
+title: "Weather Retrieval"
+author: "Jeff Allen"
+date: "10/13/2014"
+output: html_document
+---
+
+We'll now go fetch the weather for the relevant window of time in a zip code in Lake County, CA. [`95423` looks central](http://www.zipmap.net/California/Lake_County.htm) to the area, so we'll use that zip code.
+
+This code assumes that you've stored your Weather Underground API key in a file named `wu-key.txt` (sorry, you can't use mine). You'll need to sign up for one at [http://www.wunderground.com/weather/api/](http://www.wunderground.com/weather/api/). You can then set the `sleepInterval` to whatever number of seconds is appropriate to keep you from exceeding your quotas for API hits on the service.
+
+```{r, getWeather, cache=TRUE, results='hide'}
+source("Weather/DownloadHistoric.R")
+source("Weather/getRecords.R")
+
+wu_key <- readChar("wu-key.txt", nchars=100)
+
+library(lubridate)
+
+start <- "2011-09-24"
+end <- "2014-09-24"
+
+weather <- getWeather(wu_key = wu_key, zip=95423, startDate=start, endDate=end, sleepInterval = 7, outputFile = "weather.Rds")
+```
+
+In total, we got `r length(weather)` entries. For each day, we have the following fields:
+
+```{r}
+library(lubridate)
+# We get an extra `zip` entry on the front.
+weather <- weather[2:length(weather)]
+names(weather[[1]])
+```
+
+We'll use `precipi` to inform us regarding how many inches of precipitation fell that day. The shape of the data is:
+
+```{r}
+barplot(as.numeric(sapply(weather, "[[", "precipi")))
+```
+
+There are a few days with weird data (`"T"` for precipitation values, for instance). The one day I checked on which `precip == T` was 0 inches of rain/snow, so we'll just leave NAs as-is and assume they indicate no precipitation.
+
+The temperature probably might affect crime, too. Let's see what the temperature looks like.
+
+```{r}
+maxT <- as.numeric(sapply(weather, "[[", "maxtempi"))
+minT <- as.numeric(sapply(weather, "[[", "mintempi"))
+meanT <- as.numeric(sapply(weather, "[[", "meantempi"))
+
+dates <- sapply(weather, function(x){
+  x <- x$date
+  str <- paste0(x["year"], "-", x["mon"], "-", x["mday"])
+  return(str)
+})
+dates <- ymd(dates)
+
+plot(dates, maxT, type="l", ylim=c(min(minT), max(maxT)), col="#FF3333", main="Daily Min/Max/Mean Temperatures", ylab="Max Temp (F)", xlab="Date")
+lines(dates, minT, type="l", col="#3399FF")
+lines(dates, meanT, type="l", col="#009900", lwd=0.2)
+```
+
+
+
+
+
+

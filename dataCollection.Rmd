@@ -20,9 +20,9 @@ source("Weather/getRecords.R")
 # Make the data dir
 dir.create("data", showWarnings = FALSE)
 
-lastYear <- today()
-year(lastYear) <- year(today())-1
-days <- itemizeDates(startDate = lastYear, today())
+pastYear <- today()
+year(pastYear) <- year(today())-3
+days <- itemizeDates(startDate = pastYear, today())
 
 # Get all the records, we'll pause for 1 second in between each to avoid overwhelming
 # their server. So we expect this to take 6+ minutes.
