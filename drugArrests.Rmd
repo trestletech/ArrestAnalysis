@@ -136,26 +136,52 @@ wd <- data.frame(date=ymd(names(weather)), precip=as.numeric(sapply(weather, "[[
 I think there are packages that could do a rolling mean/sum, but we'll just roll our own since it's only a thousand elements.
 
 ```{r}
-windowSize <- 3
-rollPrecip <- wd
-for (i in nrow(wd):3){
-  rollPrecip[i,2] <- sum(rollPrecip[(i-windowSize+1):i,2])
+names(actByDay)[2] <- "Activity"
+
+computePrecipWindow <- function(actByDay, wd, windowSize=2){
+  rollPrecip <- wd
+  for (i in nrow(wd):windowSize){
+    rollPrecip[i,2] <- sum(rollPrecip[(i-windowSize+1):i,2], na.rm = FALSE)
+  }
+  
+  # Trim first two rows off, for which we don't have data.
+  rollPrecip <- rollPrecip[-windowSize+1:-1,]
+  
+  start <- max(min(actByDay$Date), min(rollPrecip$date))
+  end <- min(max(actByDay$Date), max(rollPrecip$date))
+  
+  # Align dates
+  actByDay <- actByDay[actByDay$Date <= end & actByDay$Date >= start,]
+  rollPrecip <- rollPrecip[rollPrecip$date <= end & rollPrecip$date >= start,]
+  wd <- wd[wd$date <= end & wd$date >= start,]
+  actByDay$RollPrecip <- rollPrecip$precip
+  
+  actByDay$Precip <- wd$precip
+  
+  actByDay
 }
 
-# Trim first two rows off, for which we don't have data.
-rollPrecip <- rollPrecip[-2:-1,]
+act <- computePrecipWindow(actByDay, wd)
+head(act)
+
+plot(act$Date, act$Activity, type="l")
+lines(act$Date, act$RollPrecip, col=2)
+
 ```
+
+Now we can see if there's a correlation between the amount of precipitation in the past three days and the drug sales.
 
 ```{r}
-plot(actByDay$Date, actByDay$x, type="l")
-lines(rollPrecip, col=2)
-
-start <- max(min(actByDay$Date, wd$date))
-end <- min(max(actByDay$Date, wd$date))
-
-common <- 
-
+cor(act$Activity, act$Precip, use="complete.obs")
+mod <- lm(act$Activity ~ act$Precip + act$RollPrecip)
+mod
 ```
 
+I wonder if the effect changes much as you change the number of days in the rolling window. Shiny to the rescue!
+
+```{r}
+saveRDS(actByDay, "abd.Rds")
+saveRDS(wd, "wd.Rds")
+```
 
 
