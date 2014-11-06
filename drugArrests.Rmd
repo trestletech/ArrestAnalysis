@@ -1,0 +1,161 @@
+---
+title: "Drug Arrests"
+author: "Jeff Allen"
+date: "10/14/2014"
+output: html_document
+---
+
+# Drug-Related Arrests in Lake County, CA
+
+We've already downloaded the data (via `dataCollection.Rmd`) in the `data/` dir, so we'll load it in and take a look.
+
+```{r}
+library(lubridate)
+
+arrests <- readRDS("data/arrests.Rds")
+load("data/bookings.Rda")
+# Produces `bookings` and `charges` objects.
+```
+
+Now we can start identifying the charges that were drug-related.
+
+```{r}
+off <- sapply(charges, "[[", "Offense")
+off <- sort(table(off), decreasing=TRUE)
+
+head(off)
+
+tail(off)
+```
+
+In total we have `r length(off)` offenses which is far more than I want to look through manually. We'll filter down to those offenses that have 10 or more occurrences.
+
+```{r}
+# Subset to those offenses for which we have 10 or more records.
+freqOff <- off[off>=10]
+length(freqOff)
+freqOff
+
+drugOff <- data.frame(off=names(freqOff), n=as.integer(freqOff), drug=rep(0, length(freqOff)))
+```
+
+I'm going to manually curate these to flag those that (to my knowledge) are drug-related.
+
+```{r}
+probablyDrugs <- c(3,5,22,24,28,37,57,61,79,88,96,126,140)
+defDealing <- c(20,25,39,62,78,97,135)
+
+drugOff$drug[probablyDrugs] <- 0.5
+drugOff$drug[defDealing] <- 1
+```
+
+The offenses I said might be drug related are:
+
+```{r}
+probDrugChr <- as.character(drugOff$off[probablyDrugs])
+probDrugChr
+```
+
+The ones I think are definitely related to selling drugs are:
+
+```{r}
+defDealingChr <- as.character(drugOff$off[defDealing])
+defDealingChr
+```
+
+Now we need to identify the dates on which these offenses were occurring. We'll first annotate each of the charges with their "drug score" so we can summarize the score for each booking. We'll just sum up this artificial score we created above to compute the drug "score" for that day across all bookings.
+
+```{r}
+# Create a data.frame for easier interaction
+charge <- do.call(rbind.data.frame, charges)
+charge$DrugScore <- 0
+charge$DrugScore[charge$Offense %in% probDrugChr] <- 0.5
+charge$DrugScore[charge$Offense %in% defDealingChr] <- 1
+
+# Multiply by the number of counts
+charge$DrugScore <- charge$DrugScore * as.integer(as.character(charge$Count))
+
+bookingScores <- aggregate(charge$DrugScore, list(Booking=charge$BookingID), function(ds){sum(ds)})
+```
+
+The majority (`r formatC(sum(bookingScores[,2]==0)/nrow(bookingScores)*100, format="f", digits=2)`%) of bookings are not drug-related:
+
+```{r}
+hist(bookingScores[,2], main="Drug-Related Bookings")
+```
+
+Now that we have the scores for bookings, we can summarize the drug scores by date.
+
+```{r}
+library(lubridate)
+arrests$DrugScore <- bookingScores[match(arrests$`Booking#`, bookingScores$Booking),2]
+```
+
+So we can now see, for all arrests in this time period, what were the drug scores?
+
+```{r}
+summary(arrests$DrugScore)
+table(arrests$DrugScore)
+```
+
+So there are `r sum(is.na(arrests$DrugScore))` arrests which don't have a drug score, presumably because there were no charges or we weren't able to fetch them from the website for some reason.
+
+The next decision we'll need to make is whether or not to cap these scores. I'm inclined to say that a single arrest for a Drug Score of 40 (???) doesn't imply that there was 40x more drug activity on the day of that charge than on another day with a Drug Score of 1 -- presumably it was just one big bust. So it probably makes sense for us to cap these scores at some value. I'm going to pick a max of 3.
+
+I'm afraid the 40 entry is actually a bug anyways... I don't see that many charges on that booking online. Oops.
+
+```{r}
+arrests$DrugScore[arrests$DrugScore > 3] <- 3
+```
+
+Now we can summarize by day:
+
+```{r}
+actByDay <- aggregate(arrests$DrugScore, list(Date=floor_date(as.POSIXct(arrests$`Time Booked`), "day")), sum)
+summary(actByDay$x)
+barplot(actByDay$x)
+```
+
+This missing chunk looks suspicious...
+
+```{r}
+which(is.na(actByDay$x))
+```
+
+Yeah, it looks like most missing days are contiguous around that block. So it's possible that their server was down for a few seconds while I was querying, or the bookings for those days didn't make it into the database, or something else strange.
+
+## Correlate with Weather
+
+```{r}
+weather <- readRDS("weather.Rds")
+weather <- weather[2:length(weather)]
+
+wd <- data.frame(date=ymd(names(weather)), precip=as.numeric(sapply(weather, "[[", "precipi")))
+```
+
+I think there are packages that could do a rolling mean/sum, but we'll just roll our own since it's only a thousand elements.
+
+```{r}
+windowSize <- 3
+rollPrecip <- wd
+for (i in nrow(wd):3){
+  rollPrecip[i,2] <- sum(rollPrecip[(i-windowSize+1):i,2])
+}
+
+# Trim first two rows off, for which we don't have data.
+rollPrecip <- rollPrecip[-2:-1,]
+```
+
+```{r}
+plot(actByDay$Date, actByDay$x, type="l")
+lines(rollPrecip, col=2)
+
+start <- max(min(actByDay$Date, wd$date))
+end <- min(max(actByDay$Date, wd$date))
+
+common <- 
+
+```
+
+
+
