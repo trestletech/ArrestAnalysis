@@ -1,0 +1,140 @@
+When Not To Sell Drugs
+========================================================
+author: Jeff Allen
+date: November 8, 2014
+
+<br />
+<br />
+
+https://github.com/trestletech/ArrestAnalysis &mdash; All code and slides
+
+Motivation
+========================================================
+
+<br />
+<br />
+<br />
+## Do drug dealers/buyers mind the rain?
+
+About Me
+========================================================
+
+ - Background in Computer Science
+ - Currently a Software Engineer at RStudio*
+ - Using R since 2007
+ - No formal training in statistics
+ 
+<small>&#42; Some legal jargon about RStudio not endorsing using the use of their products to optimally distribute narcotics...</small>
+
+Analysis Workflow
+========================================================
+
+ 1. Collect data
+ 
+<br />
+ 
+ 2. Transform/Tidy data
+ 
+<br />
+ 
+ 3. Visualize & Model
+ 
+<br />
+
+Analysis Workflow
+========================================================
+
+ 1. Collect data
+ 
+      `XML`, `RJSONIO`, `httr`, `rvest`
+ 
+ 2. Transform/Tidy data
+ 
+      `plyr`, `dplyr`, `tidyr`
+ 
+ 3. Visualize & Model
+ 
+      `lm`, `glm`, `ggplot2`, `ggvis`, ...
+
+
+Data Collection
+========================================================
+
+### Web Site (HTML)
+
+```html
+<html>
+  <body>
+    <h1>My Website!</h1>
+  </body>
+</html>
+```
+
+ - Rendered by a web browser
+ - Includes layout, images, etc.
+ - HTML can be parsed like XML
+ - The `XML` package has utilities to help parse HTML in R
+
+***
+
+### Web Servie (JSON/XML)
+
+```json
+{
+  "date": "10/09/2014",
+  "time": "14:27:05",
+  "temperature": "64"
+}
+```
+
+ - Designed to be machine-readable, no cruft easing human readability
+ - Much simpler to work with
+ - Use the `httr` R package
+
+Arrest Records
+========================================================
+
+![lc.png](lc.png)
+
+Arrest Records
+========================================================
+
+![lc-html.png](lc-html.png)
+
+Weather
+========================================================
+
+- Weather Underground has a free JSON API
+- Query weather info by zip code/date
+
+`http://api.wunderground.com/api/.../CA/San_Francisco.json`
+
+```
+{
+  "local_tz_offset": "-0700",
+  "weather": "Partly Cloudy",
+  "temperature_string": "64.6 F (18.1 C)",
+  "temp_f": 64.6,
+  "temp_c": 18.1,
+  "relative_humidity": "69%",
+...
+```
+
+RMarkdown
+========================================================
+
+ - Literate programming
+ - Embed your code in a larger document
+ - Generate a single report that contains all the analysis you did
+ - Enables reproducible research
+ - Record provenance of your data
+ 
+ Shiny
+========================================================
+
+  - Create interactive web applications using only R
+  - No knowledge of HTML/JavaScript/CSS required
+  - [shiny.rstudio.com](http://shiny.rstudio.com)
+
+Questions?
+========================================================
